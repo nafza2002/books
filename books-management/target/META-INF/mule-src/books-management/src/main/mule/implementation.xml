@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="59b9a5c7-4512-42f1-b8f7-102adc4d4d4a" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="218a0f47-7baf-48aa-b0b2-e22cb78a3fc1" >
+		<db:generic-connection url="jdbc:h2:tcp://localhost/~/book_store" driverClassName="org.h2.Driver" user="sa" />
+	</db:config>
+	<flow name="allbooks" doc:id="f4503e82-86f8-4e39-a055-5c944ac18431" >
+		<db:select doc:name="Select" doc:id="e59e9300-e78f-437d-86f9-cc57acbaef70" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from books]]></db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="4fd4c832-316c-438f-bb5d-2b69d6dafffe" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="eeade998-4637-41d6-965f-cb7c07c603c6" message="#[payload]"/>
+	
+</flow>
+	<flow name="booksid">
+		<db:select doc:name="Select" doc:id="42c2645c-db2b-4872-8ce9-bb6b6839fa67" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT * FROM books WHERE id = :id;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[id: attributes.uriParams.id]]]></db:input-parameters>
+		</db:select>
+		<choice doc:name="Choice" doc:id="7d1b8b97-e6f1-4360-961c-df44b3f08e65">
+			<when expression="#[sizeOf(payload) == 0]" >
+				<set-variable value="404" doc:name="Set Variable" doc:id="bd557c23-ecf7-4176-9d67-f6edc68b87cc" variableName="httpstatus"/>
+				<ee:transform doc:name="Transform Message" doc:id="62418bfc-b2f9-410d-ba65-5f8040efe38e" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message:"book not found"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="b7b6bc37-a8ec-474c-8d13-899476ebfa91" message="#[payload]"/>
+			</when>
+			<otherwise>
+				<ee:transform doc:name="Transform Message" doc:id="b1862434-8bec-48b2-a683-ac10bd83152f">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="13444f95-e08f-4166-bd8b-6745776a943c" message="retrieved" />
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="bookscategory" doc:id="3ceefc82-f01e-4d9e-8f7a-034ec76468ca" >
+		<db:select doc:name="Select" doc:id="c97b6826-8443-42bc-9d46-5fc18af21025" config-ref="Database_Config">
+			<db:sql ><![CDATA[
+SELECT * FROM books WHERE category = 'Programming';]]></db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="baef4c88-55a0-4358-b7eb-18ae31ae0421" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="e55391c5-1218-4c51-b27f-bc489386847a" message="#[payload]"/>
+	</flow>
+
+</mule>
+
