@@ -77,16 +77,20 @@ Error Response Example:
     "timestamp": "2025-02-05T10:00:00Z" 
 } 
 
- 
+6. Unit Testing 
+6.1 Positive Test Cases 
 
- 
- 
+  Get All Books: Validate if all books are fetched correctly. 
 
- 
+  Get Specific Book by ID: Ensure correct book details are returned for a valid ID. 
 
- 
+  Get Books by Category: Check if books matching the category are retrieved. 
 
- 
+6.2  Negative Test Cases 
+
+  Book Not Found: Simulate an invalid book ID and expect a 404 error. 
+
+  Database Connection Failure: Simulate DB downtime and check if a 500 error is returned. 
 
  
 REST API → Data retrieval & management. 
